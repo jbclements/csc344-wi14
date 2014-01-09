@@ -19,9 +19,11 @@
 
 
 (define now (pstream-current-frame ps))
-(psq (tone-maker 440) now)
-(psq (tone-maker (* 6/5 440)) (+ (s 1/2) now))
+(psq (tone-maker 124) now)
+(psq (tone-maker (* 2 124)) (+ (s 1/2) now))
+(psq (tone-maker (* 124 4)) (+ (s 1) now))
+(psq (tone-maker (* 124 8)) (+ (s 3/2) now))
 
-(psq (tone-maker 440) (+ (s 4) now))
-(psq (tone-maker (* (expt 2 3/12) 440)) (+ (s 4) (s 1/2) now))
+;(psq (tone-maker 440) (+ (s 4) now))
+;(psq (tone-maker (* (expt 2 3/12) 440)) (+ (s 4) (s 1/2) now))
 

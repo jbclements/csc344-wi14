@@ -18,12 +18,84 @@
   (piano-tone (pitch->midi-note-num pitch)))
 
 
-(define now (pstream-current-frame ps))
+#|
 (psq (tone-maker 124) now)
 (psq (tone-maker (* 2 124)) (+ (s 1/2) now))
 (psq (tone-maker (* 124 4)) (+ (s 1) now))
 (psq (tone-maker (* 124 8)) (+ (s 3/2) now))
-
+|#
 ;(psq (tone-maker 440) (+ (s 4) now))
 ;(psq (tone-maker (* (expt 2 3/12) 440)) (+ (s 4) (s 1/2) now))
+
+(define now (+ (s 1) (pstream-current-frame ps)))
+
+(define base-note 330)
+;(psq (tone-maker base-note) now)
+;(psq (tone-maker (* base-note (expt 2 4/12))) now)
+;(psq (tone-maker (* base-note (expt 2 7/12))) now)
+;(psq (tone-maker (* base-note 2)) now)
+
+#;(define equal-intervals 7)
+#;(for ([i (add1 equal-intervals)])
+  (psq (tone-maker (* 440 (expt 2 (/ i equal-intervals)))) (+ now (s (* i 1/2)))))
+
+
+
+#;(argmin (lambda (n) (abs (- n ))))
+
+(define equal-tempered-notes
+  (for/list ([i 30])
+    (* base-note (expt 2 (/ i 12)))))
+
+(define just-tuning-1-octave
+  (list 1 16/15 9/8 (* 9/8 16/15) 5/4 4/3 (* 4/3 16/15)
+        3/2 (* 3/2 16/15) 5/3 (* 5/3 16/15) 15/8 2))
+(define just-tuning-notes
+  (map
+   (lambda (x) (* x base-note))
+   (append just-tuning-1-octave
+           (rest (map (lambda (x) (* x 2)) just-tuning-1-octave))
+           (rest (map (lambda (x) (* x 4)) just-tuning-1-octave)))))
+
+just-tuning-notes
+
+(define diatonic-scale-notes (list 0 2 4 5 7 9 11 12))
+(define major-chord-notes (list 0 4 7 11 14))
+
+(define (showcase scale-notes)
+  (rs-append*
+   (list
+    (assemble
+     (for/list ([i (in-naturals)]
+                [n diatonic-scale-notes])
+       (list (piano-tone (pitch->midi-note-num 
+                          (list-ref scale-notes n))) 
+             (s (* 1/2 i)))))
+    (assemble
+     (for/list ([i (in-naturals)]
+                [n (reverse diatonic-scale-notes)])
+       (list (piano-tone (pitch->midi-note-num 
+                          (list-ref scale-notes n))) 
+             (s (* 1/2 i)))))
+    (assemble
+     (for/list ([i (in-naturals)]
+                [n major-chord-notes])
+       (list (piano-tone (pitch->midi-note-num 
+                          (list-ref scale-notes n))) 
+             (s (* 1/2 i)))))
+    (assemble
+     (for/list ([i (in-naturals)]
+                [n major-chord-notes])
+       (list (piano-tone (pitch->midi-note-num 
+                          (list-ref scale-notes n))) 
+             (s 0))))
+    (silence (s 2))
+    )))
+
+
+(define snd (showcase (drop equal-tempered-notes #;just-tuning-notes 4)))
+
+(play snd)
+
+
 

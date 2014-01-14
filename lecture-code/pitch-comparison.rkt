@@ -14,26 +14,25 @@
 
 ;; make a tone:
 (define (tone-maker pitch)
-  #;(make-tone pitch 0.2 (s 4))
-  (piano-tone (pitch->midi-note-num pitch)))
+  (make-tone pitch 0.2 (s 4))
+  #;(piano-tone (pitch->midi-note-num pitch)))
 
 
-#|
-(psq (tone-maker 124) now)
-(psq (tone-maker (* 2 124)) (+ (s 1/2) now))
-(psq (tone-maker (* 124 4)) (+ (s 1) now))
-(psq (tone-maker (* 124 8)) (+ (s 3/2) now))
-|#
-;(psq (tone-maker 440) (+ (s 4) now))
-;(psq (tone-maker (* (expt 2 3/12) 440)) (+ (s 4) (s 1/2) now))
 
 (define now (+ (s 1) (pstream-current-frame ps)))
-
 (define base-note 330)
-;(psq (tone-maker base-note) now)
-;(psq (tone-maker (* base-note (expt 2 4/12))) now)
-;(psq (tone-maker (* base-note (expt 2 7/12))) now)
-;(psq (tone-maker (* base-note 2)) now)
+#;(
+(psq (tone-maker base-note) now)
+(psq (tone-maker (* base-note (expt 2 4/12))) now)
+(psq (tone-maker (* base-note (expt 2 7/12))) now)
+(psq (tone-maker (* base-note 2)) now)
+
+(psq (tone-maker base-note) (+ (s 4) now))
+(psq (tone-maker (* base-note 5/4)) (+ (s 4)now))
+(psq (tone-maker (* base-note 3/2)) (+ (s 4)now))
+(psq (tone-maker (* base-note 2)) (+ (s 4) now)))
+
+
 
 #;(define equal-intervals 7)
 #;(for ([i (add1 equal-intervals)])
@@ -93,7 +92,7 @@ just-tuning-notes
     )))
 
 
-(define snd (showcase (drop equal-tempered-notes #;just-tuning-notes 4)))
+(define snd (showcase (drop #;equal-tempered-notes just-tuning-notes 0)))
 
 (play snd)
 

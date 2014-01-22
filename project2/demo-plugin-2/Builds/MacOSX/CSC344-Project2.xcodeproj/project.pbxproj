@@ -2880,7 +2880,7 @@
 		7649C3B7BBC899941EAF54C2 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0440;
+				LastUpgradeCheck = 0500;
 			};
 			buildConfigurationList = B0B129BA7A0DB9F65B943A1D /* Build configuration list for PBXProject "CSC344-Project2" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -3110,6 +3110,7 @@
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
 				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = NewProject;
 				WARNING_CFLAGS = "-Wreorder";
 				ZERO_LINK = NO;

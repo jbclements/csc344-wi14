@@ -40,10 +40,18 @@
                         [else (- 128 a)])
                   32))))))
 
-(define picture-tone picture-triangular-tone)
+(define picture-sawtooth-tone
+  (signal->rsound
+   2048
+   (indexed-signal 
+    (lambda (f)
+      (define a (modulo f 128))
+      (* 1/2 (* 1/128 (- a 64)))))))
+
+(define picture-tone picture-sawtooth-tone)
 
 
-(define tone1 (times 10 picture-square-tone))
+(define tone1 (times 10 picture-tone))
 (define tone2 (times 10 picture-triangular-tone))
 
 (rs-draw picture-tone)
@@ -93,7 +101,7 @@
         #:key (lambda (x) (magnitude (second x)))
         >))
 
-;; convert an array of numbers in -32767<v<32767 to a sound
+;; convert an array of numbers in -1<v<1 to a sound
 (define (array->rsound array)
   (unless (= 1 (array-dims array))
     (error 'freak-out))
@@ -103,7 +111,7 @@
                     (define samp (array-ref array (vector t)))
                     (unless (< (imag-part samp) 1e-4)
                       (error 'too-imaginary!))
-                    (magnitude samp)))))
+                    (real-part samp)))))
 
 (define (sound-with-first-n n)
   (define chosen-indexes (take sorted-with-indexes 
@@ -158,8 +166,11 @@
     ["6" (draw-and-reset-sound 12)]
     ["7" (draw-and-reset-sound 14)]
     ["8" (draw-and-reset-sound 16)]
-    ["9" (draw-and-reset-sound 2048)]))
+    ["9" (draw-and-reset-sound 2048)]
+    [";" (begin (psn (times 10 picture-square-tone)) w)]
+    ["q" (begin (psn (times 10 picture-triangular-tone)) w)]
+    ["j" (begin (psn (times 10 picture-sawtooth-tone)) w)]))
 
-#;(big-bang (draw-and-reset-sound 2)
+(big-bang (draw-and-reset-sound 2)
           [to-draw world-draw]
           [on-key handle-key])

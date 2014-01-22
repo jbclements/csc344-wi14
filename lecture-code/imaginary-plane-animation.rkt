@@ -11,6 +11,7 @@
 (define CENTERX (/ WIDTH 2))
 (define CENTERY (/ HEIGHT 2))
 
+
 (define (make-oscillator freq)
   (lambda (t)
     (exp (* 2 pi freq t i 1/20))))
@@ -38,16 +39,18 @@
   (overlay (circle RADIUS "outline" "red")
              (empty-scene WIDTH HEIGHT)))
 
-(define f1 (make-oscillator 1))
-(define f2 (make-oscillator 2))
+(define f1 (make-oscillator 2))
+(define f2 (make-oscillator -2))
+(define (f3 t) 
+  (for/sum ([i t])
+    (* (f1 i) (f2 i))))
 
 (define (time->scene t)
   (define a (f1 t))
-  (define b (my-sig t))
-  (define product (* a b))
-  #;(define b (f2 t))
-  #;(define product-signal (+ a b))
-  (define signals (list a b product))
+  (define b (f2 t))
+  (define sum-of-products (f3 t))
+  #;(define product (* a b))
+  (define signals (list a b sum-of-products))
   (for/fold ([scene BASE-SCENE])
     ([sig signals] [pen pens])
     (overlay-signal

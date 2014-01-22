@@ -2,13 +2,22 @@
 
 (require rsound
          rsound/draw
-         #;2htdp/image
-         #;2htdp/universe
+         2htdp/image
+         2htdp/universe
          math/array)
+
+(define ps (make-pstream))
+(define (psn snd) (pstream-play ps snd))
+
+
 
 (define flute-tone (rs-read "/tmp/e4v.wav"))
 
+(rs-draw flute-tone)
+
 (define shortened (resample/interp (/ 9000 8192) flute-tone))
+
+;(play shortened)
 
 
 
@@ -37,7 +46,9 @@
 
 (define loopy (wrapped-clip shortened loop-start (+ loop-start 8192) 3000))
 
-#;(play (times 50 loopy))
+;(play (times 50 loopy))
+
+
 
 (rs-draw (times 4 loopy))
 
@@ -48,7 +59,7 @@
 (rsound/left-1-fft-draw picture-tone)
 
 (define vec-as-array (build-array (vector (rs-frames picture-tone))
-                                  (lambda (i) (rs-ith/left/s16 picture-tone (vector-ref i 0)))))
+                                  (lambda (i) (rs-ith/left picture-tone (vector-ref i 0)))))
 (define the-fft (array-fft vec-as-array))
 
 (define the-inverse (array-inverse-fft the-fft))
@@ -62,7 +73,7 @@
         #:key (lambda (x) (magnitude (second x)))
         >))
 
-;; convert an array of numbers in -32767<v<32767 to a sound
+;; convert an array of numbers in -1<v<1 to a sound
 (define (array->rsound array)
   (unless (= 1 (array-dims array))
     (error 'freak-out))
@@ -72,7 +83,7 @@
                     (define samp (array-ref array (vector t)))
                     (unless (< (imag-part samp) 1e-4)
                       (error 'too-imaginary!))
-                    (/ (truncate (real-part samp)) 32767.0)))))
+                    (real-part samp)))))
 
 (define (sound-with-first-n n)
   (define chosen-indexes (take sorted-with-indexes 
@@ -97,6 +108,8 @@
                            [(list v) v]))))))
 
 (define resynthesized-tone #f)
+(define tone1 (times 10 picture-tone))
+(define tone2 #f)
 
 (define (draw-and-reset-sound n)
   (define snd (sound-with-first-n n))
@@ -104,8 +117,6 @@
   (set! resynthesized-tone snd)
   (set! tone2 (times 10 snd))
   n)
-
-(draw-and-reset-sound 2048)
 
 (define (world-draw w)
   (overlay
@@ -121,15 +132,15 @@
     ["," (begin (psn tone2) w)]
     ["1" (draw-and-reset-sound 2)]
     ["2" (draw-and-reset-sound 4)]
-    ["3" (draw-and-reset-sound 6)]
-    ["4" (draw-and-reset-sound 8)]
-    ["5" (draw-and-reset-sound 10)]
-    ["6" (draw-and-reset-sound 12)]
-    ["7" (draw-and-reset-sound 14)]
-    ["8" (draw-and-reset-sound 16)]
-    ["9" (draw-and-reset-sound 2048)]))
+    ["3" (draw-and-reset-sound 8)]
+    ["4" (draw-and-reset-sound 16)]
+    ["5" (draw-and-reset-sound 32)]
+    ["6" (draw-and-reset-sound 64)]
+    ["7" (draw-and-reset-sound 128)]
+    ["8" (draw-and-reset-sound 256)]
+    ["9" (draw-and-reset-sound 8192)]))
 
-#;(big-bang (draw-and-reset-sound 2)
+(big-bang (draw-and-reset-sound 2)
           [to-draw world-draw]
           [on-key handle-key])
 

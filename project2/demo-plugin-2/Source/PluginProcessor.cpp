@@ -154,7 +154,7 @@ void NewProjectAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
         buffer.clear (i, 0, buffer.getNumSamples());
     }*/
     
-    for (int channel=0; channel < getNumInputChannels(); channel++) {
+    for (int channel=0; channel < getNumOutputChannels(); channel++) {
         float* samples = buffer.getSampleData(channel);
         for (int frame = 0; frame < buffer.getNumSamples(); frame++) {
             samples[frame] = ((frame % 100) < 50 ? 0.5 : 0.0);

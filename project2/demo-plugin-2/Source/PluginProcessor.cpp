@@ -126,6 +126,7 @@ public:
     }
     
 private:
+    bool playing;
     double currentAngle, angleDelta, level, tailOff;
 };
 
@@ -277,7 +278,7 @@ void NewProjectAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
 
     // output buffers will initially be garbage, must be cleared:
     for (int i = 0; i < getNumOutputChannels(); ++i) {
-        buffer.clear (i, 0, buffer.getNumSamples());
+        buffer.clear (i, 0, numSamples);
     }
     
     // Now pass any incoming midi messages to our keyboard state object, and let it
@@ -286,23 +287,6 @@ void NewProjectAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     
     // and now get the synth to process these midi events and generate its output.
     synth.renderNextBlock (buffer, midiMessages, 0, numSamples);
-
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    /*for (int channel = 0; channel < getNumInputChannels(); ++channel)
-    {
-        float* channelData = buffer.getSampleData (channel);
-
-        // ..do something to the data...
-    }*/
-
-    /*
-    for (int channel=0; channel < getNumOutputChannels(); channel++) {
-        float* samples = buffer.getSampleData(channel);
-        for (int frame = 0; frame < numSamples; frame++) {
-            samples[frame] = ((frame % 100) < 50 ? 0.5 : 0.0);
-        }
-    }*/
 
     // ask the host for the current time so we can display it...
     AudioPlayHead::CurrentPositionInfo newTime;

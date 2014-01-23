@@ -275,6 +275,11 @@ void NewProjectAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
 {
     const int numSamples = buffer.getNumSamples();
 
+    // output buffers will initially be garbage, must be cleared:
+    for (int i = 0; i < getNumOutputChannels(); ++i) {
+        buffer.clear (i, 0, buffer.getNumSamples());
+    }
+    
     // Now pass any incoming midi messages to our keyboard state object, and let it
     // add messages to the buffer if the user is clicking on the on-screen keys
     keyboardState.processNextMidiBuffer (midiMessages, 0, numSamples, true);

@@ -24,6 +24,9 @@ public:
 
 //==============================================================================
 /** A Voice for Project 2 */
+
+#define HARMONICS 4
+
 class P2Voice  : public SynthesiserVoice
 {
 public:
@@ -42,12 +45,17 @@ public:
                     SynthesiserSound* /*sound*/, int /*currentPitchWheelPosition*/)
     {
         currentAngle = 0.0;
+        
+        for (int i = 0; i < HARMONICS; i++) {
+            levels[i] = 0.25;
+        }
         level = velocity * 0.15;
         tailOff = 0.0;
         
         double cyclesPerSecond = MidiMessage::getMidiNoteInHertz (midiNoteNumber);
         double cyclesPerSample = cyclesPerSecond / getSampleRate();
         
+        // the angleDelta for the base frequency.
         angleDelta = cyclesPerSample * 2.0 * double_Pi;
     }
     
@@ -83,50 +91,35 @@ public:
     
     void renderNextBlock (AudioSampleBuffer& outputBuffer, int startSample, int numSamples)
     {
-        if (angleDelta != 0.0)
-        {
-            if (tailOff > 0)
-            {
-                while (--numSamples >= 0)
+        // the tailOff thing is terrible.
+        double levelMult = (tailOff != 0.0 ? tailOff : 1.0);
+        for (int sample = startSample; sample < startSample + numSamples; sample++){
+            const float currentSampleVal = (float) (sin (currentAngle) * level * levelMult);
+            
+            for (int i = outputBuffer.getNumChannels(); --i >= 0;) {
+                *outputBuffer.getSampleData (i, sample) += currentSampleVal;
+            }
+            
+            currentAngle += angleDelta;
+            
+            if (tailOff != 0.0) {
+                tailOff *= 0.99;
+            
+                if (tailOff <= 0.005)
                 {
-                    const float currentSample = (float) (sin (currentAngle) * level * tailOff);
-                    
-                    for (int i = outputBuffer.getNumChannels(); --i >= 0;)
-                        *outputBuffer.getSampleData (i, startSample) += currentSample;
-                    
-                    currentAngle += angleDelta;
-                    ++startSample;
-                    
-                    tailOff *= 0.99;
-                    
-                    if (tailOff <= 0.005)
-                    {
-                        clearCurrentNote();
-                        
-                        angleDelta = 0.0;
-                        break;
-                    }
+                    clearCurrentNote();
+                
+                    angleDelta = 0.0;
+                    break;
                 }
             }
-            else
-            {
-                while (--numSamples >= 0)
-                {
-                    const float currentSample = (float) (sin (currentAngle) * level);
-                    
-                    for (int i = outputBuffer.getNumChannels(); --i >= 0;)
-                        *outputBuffer.getSampleData (i, startSample) += currentSample;
-                    
-                    currentAngle += angleDelta;
-                    ++startSample;
-                }
-            }
-            angleDelta *= 0.99;
         }
     }
     
 private:
     bool playing;
+    double angles[HARMONICS];
+    double levels[HARMONICS];
     double currentAngle, angleDelta, level, tailOff;
 };
 

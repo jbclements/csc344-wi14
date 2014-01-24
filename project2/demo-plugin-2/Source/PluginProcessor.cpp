@@ -60,6 +60,7 @@ public:
     }
 };
 
+
 //==============================================================================
 /** A Voice for Project 2 */
 
@@ -71,9 +72,9 @@ public:
     P2Voice()
     : playing(notPlaying),
     angleDelta (0.0),
-    tailOff (0.0)
+    tailOff (0.0),
+    wavetable()
     {
-        wavetable = new SquareTable();
     }
     
     bool canPlaySound (SynthesiserSound* sound)
@@ -143,7 +144,7 @@ public:
                 const double o1 = (sin (o1_angle * 2.0 * double_Pi));
                 const double amplitude = 1.0 + (0.5 * o1);
                 const float currentSampleVal = 
-                    (float) (sin (currentAngle * 2.0 * double_Pi) * levelMult * amplitude);
+                    (float) (wavetable.lookup(currentAngle) * levelMult * amplitude);
                 
                 for (int i = outputBuffer.getNumChannels(); --i >= 0;) {
                     *outputBuffer.getSampleData (i, sample) += currentSampleVal;
@@ -191,7 +192,7 @@ private:
     double o1_freq = 2;
     double o1_angle, o1_angleDelta;
     // a wavetable
-    WaveTable *wavetable;
+    SquareTable wavetable;
 };
 
 

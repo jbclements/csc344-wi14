@@ -23,6 +23,44 @@ public:
 };
 
 //==============================================================================
+/** A Wavetable **/
+
+// NB: ANGLES SPECIFIED IN ROTATIONS, NOT RADIANS.
+
+#define WAVETABLE_SIZE 1000
+// this is one larger than needed, to prevent
+// having to special-case the wraparound.
+#define WAVETABLE_ARRAY_SIZE (WAVETABLE_SIZE + 1)
+class WaveTable 
+{
+public:
+    float table[WAVETABLE_ARRAY_SIZE];
+    
+    // given a number in 0<angle<1.0, return 
+    // a (linearly interpolated) number from the wavetable.
+    float lookup(double angle){
+        // yes, we could avoid all of the multiplication if we 
+        // pushed the wavetable size into the angle....
+        const double scaled_angle = angle * WAVETABLE_SIZE;
+        const double lower = floor(scaled_angle);
+        const double fraction = scaled_angle - lower;
+        return (table[(int)lower] * (1.0 - fraction)) 
+            + (table[(int)lower+1] * fraction);
+    }
+};
+
+// Represents a square wave
+class SquareTable : public WaveTable {
+public:
+    SquareTable(){
+        for (int i = 0; i < WAVETABLE_SIZE; i++){
+            table[i] =  ((i < (WAVETABLE_SIZE/2)) ? 1.0 : -1.0);
+        }
+        table[WAVETABLE_SIZE] = 1.0;
+    }
+};
+
+//==============================================================================
 /** A Voice for Project 2 */
 
 #define HARMONICS 4
@@ -31,9 +69,11 @@ class P2Voice  : public SynthesiserVoice
 {
 public:
     P2Voice()
-    : angleDelta (0.0),
+    : playing(notPlaying),
+    angleDelta (0.0),
     tailOff (0.0)
     {
+        wavetable = new SquareTable();
     }
     
     bool canPlaySound (SynthesiserSound* sound)
@@ -44,19 +84,23 @@ public:
     void startNote (int midiNoteNumber, float velocity,
                     SynthesiserSound* /*sound*/, int /*currentPitchWheelPosition*/)
     {
+        playing = keyHeld;
         currentAngle = 0.0;
         
         for (int i = 0; i < HARMONICS; i++) {
             levels[i] = 0.25;
         }
-        level = velocity * 0.15;
-        tailOff = 0.0;
+        level = velocity * 0.015;
         
-        double cyclesPerSecond = MidiMessage::getMidiNoteInHertz (midiNoteNumber);
-        double cyclesPerSample = cyclesPerSecond / getSampleRate();
+        const double cyclesPerSecond = MidiMessage::getMidiNoteInHertz (midiNoteNumber);
+        const double cyclesPerSample = cyclesPerSecond / getSampleRate();
         
         // the angleDelta for the base frequency.
-        angleDelta = cyclesPerSample * 2.0 * double_Pi;
+        angleDelta = cyclesPerSample;
+        
+        // reset o1
+        o1_angle = 0.0;
+        o1_angleDelta = o1_freq / getSampleRate();
     }
     
     void stopNote (bool allowTailOff)
@@ -65,16 +109,18 @@ public:
         {
             // start a tail-off by setting this flag. The render callback will pick up on
             // this and do a fade out, calling clearCurrentNote() when it's finished.
-            
-            if (tailOff == 0.0) // we only need to begin a tail-off if it's not already doing so - the
+            if (playing == keyHeld) {
+                // we only need to begin a tail-off if it's not already doing so - the
                 // stopNote method could be called more than once.
+                playing = keyReleased;
                 tailOff = 1.0;
+            }
         }
         else
         {
             // we're being told to stop playing immediately, so reset everything..
-            
             clearCurrentNote();
+            playing = notPlaying;
             angleDelta = 0.0;
         }
     }
@@ -91,36 +137,61 @@ public:
     
     void renderNextBlock (AudioSampleBuffer& outputBuffer, int startSample, int numSamples)
     {
-        // the tailOff thing is terrible.
-        double levelMult = (tailOff != 0.0 ? tailOff : 1.0);
-        for (int sample = startSample; sample < startSample + numSamples; sample++){
-            const float currentSampleVal = (float) (sin (currentAngle) * level * levelMult);
-            
-            for (int i = outputBuffer.getNumChannels(); --i >= 0;) {
-                *outputBuffer.getSampleData (i, sample) += currentSampleVal;
-            }
-            
-            currentAngle += angleDelta;
-            
-            if (tailOff != 0.0) {
-                tailOff *= 0.99;
-            
-                if (tailOff <= 0.005)
-                {
-                    clearCurrentNote();
+        if (playing != notPlaying) {
+            const double levelMult = level * (playing ==  keyReleased ? tailOff : 1.0);
+            for (int sample = startSample; sample < startSample + numSamples; sample++){
+                const double o1 = (sin (o1_angle * 2.0 * double_Pi));
+                const double amplitude = 1.0 + (0.5 * o1);
+                const float currentSampleVal = 
+                    (float) (sin (currentAngle * 2.0 * double_Pi) * levelMult * amplitude);
                 
-                    angleDelta = 0.0;
-                    break;
+                for (int i = outputBuffer.getNumChannels(); --i >= 0;) {
+                    *outputBuffer.getSampleData (i, sample) += currentSampleVal;
+                }
+                
+                currentAngle = angleWrap(currentAngle + angleDelta);
+                o1_angle = angleWrap(o1_angle + o1_angleDelta);
+            
+                if (playing == keyReleased) {
+                    tailOff *= 0.99;
+            
+                    if (tailOff <= 0.005)
+                    {
+                        clearCurrentNote();
+                        playing = notPlaying;
+                        angleDelta = 0.0;
+                        break;
+                    }
                 }
             }
         }
     }
     
 private:
-    bool playing;
+    // wrap an angle around. ASSUMES IT'S NOT GREATER THAN 2.
+    double angleWrap(double angle) const {
+        return (angle > 1.0 ? angle - 1.0 : angle);
+    }
+    
+    enum PlayState
+    {
+        notPlaying = 0,
+        keyHeld,
+        keyReleased
+    };
+    
+
+    PlayState playing;
     double angles[HARMONICS];
     double levels[HARMONICS];
-    double currentAngle, angleDelta, level, tailOff;
+    // all angles are measured in *rotations*, not radians.
+    double currentAngle, angleDelta;
+    double level, tailOff;
+    // osc1
+    double o1_freq = 2;
+    double o1_angle, o1_angleDelta;
+    // a wavetable
+    WaveTable *wavetable;
 };
 
 

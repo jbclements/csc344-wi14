@@ -47,17 +47,24 @@ public:
         return (table[(int)lower] * (1.0 - fraction)) 
             + (table[(int)lower+1] * fraction);
     }
-};
-
-// Represents a square wave
-class SquareTable : public WaveTable {
-public:
-    SquareTable(){
+    
+    void squareInit(){
         for (int i = 0; i < WAVETABLE_SIZE; i++){
             table[i] =  ((i < (WAVETABLE_SIZE/2)) ? 1.0 : -1.0);
         }
-        table[WAVETABLE_SIZE] = 1.0;
+        table[WAVETABLE_SIZE] = 1.0;        
     }
+    
+    void sineInit(){
+        for (int i = 0; i < WAVETABLE_SIZE; i++){
+            table[i] = sin(2.0 * double_Pi * ((double)i / WAVETABLE_SIZE));
+        }
+        table[WAVETABLE_SIZE] = 0.0;
+    }
+    
+/*    void triangleInit(){
+        
+    }*/
 };
 
 
@@ -75,6 +82,7 @@ public:
     tailOff (0.0),
     wavetable()
     {
+        wavetable.squareInit();
     }
     
     bool canPlaySound (SynthesiserSound* sound)
@@ -91,7 +99,7 @@ public:
         for (int i = 0; i < HARMONICS; i++) {
             levels[i] = 0.25;
         }
-        level = velocity * 0.015;
+        level = velocity * 0.15;
         
         const double cyclesPerSecond = MidiMessage::getMidiNoteInHertz (midiNoteNumber);
         const double cyclesPerSample = cyclesPerSecond / getSampleRate();
@@ -192,7 +200,7 @@ private:
     double o1_freq = 2;
     double o1_angle, o1_angleDelta;
     // a wavetable
-    SquareTable wavetable;
+    WaveTable wavetable;
 };
 
 

@@ -9,13 +9,15 @@
 
 
 (define (fun z)
-  (* (- z (exp (* i (/ pi 4))))
+  (* (- z -1/2) (+ (* z z) (* -2 (cos (/ pi 4)) z) 1))
+  
+  #;(* (- z (exp (* i (/ pi 4))))
      (- z (exp (- (* i (/ pi 4)))))
      #;(- z -3/4)
      (- z (* 3/4 (exp (* i (/ (* 3 pi) 4)))))
      (- z (* 3/4 (exp (- (* i (/ (* 3 pi) 4))))))))
 
-(plot3d (list (surface3d (λ (x y) (magnitude (fun (+ x (* y i))))) -2 2 -2 2
+(plot3d (list (surface3d (λ (x y) (magnitude (fun (+ x (* y i))))) -1 1 -1 1
                            #:label "magnitude")
               (parametric3d (lambda (theta)
                               (list (cos theta)

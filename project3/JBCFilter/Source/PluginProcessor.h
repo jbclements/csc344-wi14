@@ -65,10 +65,23 @@ public:
     //==============================================================================
     void getStateInformation (MemoryBlock& destData);
     void setStateInformation (const void* data, int sizeInBytes);
+    
+    enum Parameters
+    {
+        awesomeParam = 0,
+        anotherParam,
+        
+        totalNumParams
+    };
+
 
 private:
     //==============================================================================
+    AudioSampleBuffer delayBuffer;
+    int delayPosition;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JbcfilterAudioProcessor)
+
 };
 
 #endif  // PLUGINPROCESSOR_H_INCLUDED

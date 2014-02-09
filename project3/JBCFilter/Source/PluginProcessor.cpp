@@ -14,6 +14,7 @@
 
 //==============================================================================
 JbcfilterAudioProcessor::JbcfilterAudioProcessor()
+: delayBuffer(2,10000)
 {
 }
 
@@ -29,7 +30,7 @@ const String JbcfilterAudioProcessor::getName() const
 
 int JbcfilterAudioProcessor::getNumParameters()
 {
-    return 0;
+    return totalNumParams;
 }
 
 float JbcfilterAudioProcessor::getParameter (int index)
@@ -42,8 +43,15 @@ void JbcfilterAudioProcessor::setParameter (int index, float newValue)
 }
 
 const String JbcfilterAudioProcessor::getParameterName (int index)
-{
-    return String::empty;
+{  
+    switch(index){
+        case awesomeParam:
+            return "magnifico";
+        case anotherParam:
+            return "semi-okay";
+        default:
+            return String::empty;
+    }
 }
 
 const String JbcfilterAudioProcessor::getParameterText (int index)
@@ -137,15 +145,35 @@ void JbcfilterAudioProcessor::releaseResources()
 
 void JbcfilterAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
 {
+
+    const int samples = buffer.getNumSamples();
+    const int delayBufferSamples = delayBuffer.getNumSamples();
+
+    int dp = delayPosition;
+    
     // This is the place where you'd normally do the guts of your plugin's
     // audio processing...
     for (int channel = 0; channel < getNumInputChannels(); ++channel)
     {
+        dp = delayPosition;
         float* channelData = buffer.getSampleData (channel);
-
+        float* delayData = delayBuffer.getSampleData(channel);
+        for (int i = 0; i < samples; i++) {
+            float in = channelData[i];
+            channelData[i] += delayData[dp];
+            // overwrite old delayData
+            delayData[dp] = in;
+            dp += 1;
+            if (dp > delayBufferSamples){
+                dp = 0;
+            }
+        }
+        
         // ..do something to the data...
     }
 
+    delayPosition = dp;
+    
     // In case we have more outputs than inputs, we'll clear any output
     // channels that didn't contain input data, (because these aren't
     // guaranteed to be empty - they may contain garbage).

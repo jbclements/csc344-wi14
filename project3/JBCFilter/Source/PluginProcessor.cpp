@@ -12,10 +12,12 @@
 #include "PluginEditor.h"
 
 
+# define BUFFER_LEN 3
 //==============================================================================
 JbcfilterAudioProcessor::JbcfilterAudioProcessor()
-: delayBuffer(2,10000)
+: delayBuffer(2,BUFFER_LEN)
 {
+    freqSliderVal = 800.0;
 }
 
 JbcfilterAudioProcessor::~JbcfilterAudioProcessor()
@@ -35,18 +37,30 @@ int JbcfilterAudioProcessor::getNumParameters()
 
 float JbcfilterAudioProcessor::getParameter (int index)
 {
-    return 0.0f;
+    switch(index) {
+        case freqParam:
+            return freqSliderVal;
+        default:
+            return 0.0f;
+    }
 }
 
 void JbcfilterAudioProcessor::setParameter (int index, float newValue)
 {
+    switch (index) {
+        case freqParam:
+            freqSliderVal = newValue;
+            break;            
+        default:
+            break;
+    }
 }
 
 const String JbcfilterAudioProcessor::getParameterName (int index)
 {  
     switch(index){
-        case awesomeParam:
-            return "magnifico";
+        case freqParam:
+            return "freqParam";
         case anotherParam:
             return "semi-okay";
         default:
@@ -143,12 +157,16 @@ void JbcfilterAudioProcessor::releaseResources()
     // spare memory, etc.
 }
 
+#define WRAPPY(x) ((x + BUFFER_LEN) % BUFFER_LEN)
+
 void JbcfilterAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
 {
 
     const int samples = buffer.getNumSamples();
     const int delayBufferSamples = delayBuffer.getNumSamples();
 
+    const double freqAngle = double_Pi * (freqSliderVal/getSampleRate());
+    const float midmult = -2 * cos(freqAngle);
     int dp = delayPosition;
     
     // This is the place where you'd normally do the guts of your plugin's
@@ -160,7 +178,8 @@ void JbcfilterAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffe
         float* delayData = delayBuffer.getSampleData(channel);
         for (int i = 0; i < samples; i++) {
             float in = channelData[i];
-            channelData[i] += delayData[dp];
+            channelData[i] += midmult*delayData[WRAPPY(dp-1)] 
+                            + delayData[WRAPPY(dp-2)];
             // overwrite old delayData
             delayData[dp] = in;
             dp += 1;
@@ -168,8 +187,6 @@ void JbcfilterAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffe
                 dp = 0;
             }
         }
-        
-        // ..do something to the data...
     }
 
     delayPosition = dp;

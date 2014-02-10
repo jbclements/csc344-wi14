@@ -68,7 +68,7 @@ public:
     
     enum Parameters
     {
-        awesomeParam = 0,
+        freqParam = 0,
         anotherParam,
         
         totalNumParams
@@ -79,6 +79,7 @@ private:
     //==============================================================================
     AudioSampleBuffer delayBuffer;
     int delayPosition;
+    double freqSliderVal;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JbcfilterAudioProcessor)
 

@@ -25,3 +25,26 @@
       #:x-max 1
       #:y-min -1
       #:y-max 1)
+
+
+
+(define ins (for/list ([j 10]) (* i j)))
+
+(plot (points (for/list ([p ins])
+                (list (real-part p) (imag-part p))))
+      #:x-min -1
+      #:x-max 1
+      #:y-min -1
+      #:y-max 10)
+
+(define (transform s)
+  (/ (+ 1 (/ s 2))
+     (- 1 (/ s 2))))
+
+
+(plot (points (for/list ([p (map transform ins)])
+                (list (real-part p) (imag-part p))))
+      #:x-min -1
+      #:x-max 1
+      #:y-min -1
+      #:y-max 1)

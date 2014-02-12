@@ -12,11 +12,13 @@
 #include "PluginEditor.h"
 
 
-# define BUFFER_LEN 3
+# define BUFFER_LEN 5
 //==============================================================================
 JbcfilterAudioProcessor::JbcfilterAudioProcessor()
-: delayBuffer(2,BUFFER_LEN)
+: delayBuffer(2,BUFFER_LEN),
+  delayPosition(0)
 {
+    delayBuffer.clear();
     freqSliderVal = 800.0;
 }
 
@@ -167,8 +169,13 @@ void JbcfilterAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffe
     const int samples = buffer.getNumSamples();
     const int delayBufferSamples = delayBuffer.getNumSamples();
 
-    const double freqAngle = double_Pi * (freqSliderVal/getSampleRate());
-    const float midmult = -2 * cos(freqAngle);
+    const double gain = 4.451308403097265e-05;
+    const double coefficients[] = {3.877592874348083,
+                                    -5.652376401460651,
+                                    3.67083157484435,
+                                    -0.8960925608158135};
+    //const double freqAngle = double_Pi * (freqSliderVal/getSampleRate());
+    //const float midmult = -2 * cos(freqAngle);
     int dp = delayPosition;
     
     // This is the place where you'd normally do the guts of your plugin's
@@ -179,13 +186,17 @@ void JbcfilterAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffe
         float* channelData = buffer.getSampleData (channel);
         float* delayData = delayBuffer.getSampleData(channel);
         for (int i = 0; i < samples; i++) {
-            float in = channelData[i];
-            channelData[i] += midmult*delayData[WRAPPY(dp-1)] 
-                           + delayData[WRAPPY(dp-2)];
+            //float in = channelData[i];
+            channelData[i] = gain * channelData[i]
+                            + coefficients[0]*delayData[WRAPPY(dp-1)]
+                            + coefficients[1]*delayData[WRAPPY(dp-2)]
+                            + coefficients[2]*delayData[WRAPPY(dp-3)]
+                            + coefficients[3]*delayData[WRAPPY(dp-4)];
             // overwrite old delayData
-            delayData[dp] = in;
+            // feed BACK!
+            delayData[dp] = channelData[i];
             dp += 1;
-            if (dp > delayBufferSamples){
+            if (dp >= delayBufferSamples){
                 dp = 0;
             }
         }

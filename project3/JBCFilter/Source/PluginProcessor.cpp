@@ -161,7 +161,9 @@ void JbcfilterAudioProcessor::releaseResources()
 
 void JbcfilterAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
 {
-
+    std::cout << "yes, I am alive\n";
+    printf("number of input channels: %d\n",getNumInputChannels());
+    
     const int samples = buffer.getNumSamples();
     const int delayBufferSamples = delayBuffer.getNumSamples();
 
@@ -179,7 +181,7 @@ void JbcfilterAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffe
         for (int i = 0; i < samples; i++) {
             float in = channelData[i];
             channelData[i] += midmult*delayData[WRAPPY(dp-1)] 
-                            + delayData[WRAPPY(dp-2)];
+                           + delayData[WRAPPY(dp-2)];
             // overwrite old delayData
             delayData[dp] = in;
             dp += 1;

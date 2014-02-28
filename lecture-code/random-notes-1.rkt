@@ -6,6 +6,7 @@
 (struct note (pitch time duration))
 (define (s sec) (* 44100 sec))
 
+(define notes-list)
 (define notes
   (let loop ([cur-time (s 2)])
     (cond [(< (s 30) cur-time) empty]

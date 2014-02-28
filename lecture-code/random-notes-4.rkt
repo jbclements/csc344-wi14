@@ -1,26 +1,30 @@
 #lang racket
 
 (require rsound
-         rsound/piano-tones
+         rsound/single-cycle
          math/distributions)
 
 (struct note (pitch time duration))
 (define (s sec) (round (* 44100 sec)))
-(define tempo 128)
+(define tempo 120)
 (define qtr (s (/ 60 tempo)))
 (define eighth (round (/ qtr 2)))
+(define sixteenth (round (/ eighth 2)))
 
 (define len-dis
+  (discrete-dist (list qtr eighth sixteenth)
+                 (list 1 1 10)))
+(define bass-len-dis
   (discrete-dist (list qtr eighth)))
 (define note-dis 
   (discrete-dist (for/list ([i 24]) (+ 50 i))
-                 '(1 0 1 0 1 1 0 1 0 1 0 1
-                   9 0 1 0 1 1 0 9 0 1 0 1
+                 '(0 0 0 0 0 0 0 0 0 0 0 0
+                   9 0 1 0 1 1 0 9 0 0 0 0
                    )))
 (define bass-note-dis 
   (discrete-dist (for/list ([i 24]) (+ 26 i))
-                 '(1 0 0 0 0 0 0 0 0 0 0 0
-                   1 0 0 0 0 0 0 0 0 0 0 0
+                 '(1 0 0 0 0 0 0 1 0 0 0 0
+                   1 0 0 0 0 0 0 1 0 0 0 0
                    )))
 
 (define notes
@@ -33,7 +37,7 @@
                         (loop (+ cur-time dur)))]))
     (let loop ([cur-time (s 2)])
       (cond [(< (s 30) cur-time) empty]
-            [else (define dur (sample len-dis))
+            [else (define dur (sample bass-len-dis))
                   (cons (note (sample bass-note-dis) cur-time dur)
                         (loop (+ cur-time dur)))])))
    <
@@ -55,9 +59,7 @@
 (define (play-note n)
   (pstream-queue
    ps
-   (let ([snd (piano-tone (note-pitch n))])
-   (clip snd
-         0 (min (rs-frames snd) (note-duration n))))
+   (synth-note "main" 1 (note-pitch n) (note-duration n))
    (note-time n)))
 
 (play-notes notes)

@@ -7,14 +7,19 @@
 ;; output contains deflection and duration
 
 ;; a simple markov model : a hash from states to (listof (list probability (list (list deflection duration) next-state)))
+#;(define simple-model
+  ;; swing!
+  (hash 'a (list (list 1.0 (list (list 0 1/2) 'b)))
+        'b (list (list 1.0 (list (list -1/6 1/2) 'a))))
+  )
 (define simple-model
   (hash 'a (list (list 0.2 (list (list 0 1) 'b))
-                 (list 0.2 (list (list 0 1/2) 'hb1))
+                 (list 0.2 (list (list 0 5/8) 'hb1))
                  (list 0.1 (list (list 4/5 1/5) 'rev2))
                  (list 0.1 (list (list 'reverse 1) 'a))
                 (list 0.4 (list (list 0 1) 'a)))
         'b (list (list 1.0 (list (list -1 1) 'a)))
-        'hb1 (list (list 1.0 (list (list -1/2 1/2) 'a)))
+        'hb1 (list (list 1.0 (list (list -5/8 3/8) 'a)))
         'rev2 (list (list 1.0 (list (list 2/5 1/5) 'rev3)))
         'rev3 (list (list 1.0 (list (list 0/5 1/5) 'rev4)))
         'rev4 (list (list 1.0 (list (list -2/5 1/5) 'rev5)))
